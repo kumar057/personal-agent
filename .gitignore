@@ -1,0 +1,30 @@
+# Environment secrets (NEVER COMMIT)
+.env
+.env.local
+
+# Python virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Application data & databases
+data/*.db
+data/knowledge/*
+!data/knowledge/.gitkeep
+
+# Large setup binaries
+OllamaSetup.exe
+*.exe
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

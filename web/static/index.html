@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis - Personal AI Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon"><i class="fa-solid fa-microchip"></i></div>
+                <div class="brand-text">
+                    <h2>AEGIS</h2>
+                    <span>Local AI Agent</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="chat">
+                    <i class="fa-solid fa-comments"></i> <span>Assistant</span>
+                </button>
+                <button class="nav-item" data-tab="productivity">
+                    <i class="fa-solid fa-list-check"></i> <span>Tasks & Notes</span>
+                </button>
+                <button class="nav-item" data-tab="knowledge">
+                    <i class="fa-solid fa-book-open"></i> <span>Knowledge Base</span>
+                </button>
+                <button class="nav-item" data-tab="models">
+                    <i class="fa-solid fa-cube"></i> <span>Local Models</span>
+                </button>
+            </nav>
+
+            <!-- Hardware Telemetry Widget -->
+            <div class="telemetry-card">
+                <div class="telemetry-title"><i class="fa-solid fa-gauge-high"></i> Hardware Monitor</div>
+                <div class="metric-row">
+                    <span>CPU</span>
+                    <span id="metric-cpu" class="metric-val">--%</span>
+                </div>
+                <div class="metric-bar"><div id="bar-cpu" class="metric-progress" style="width: 0%"></div></div>
+
+                <div class="metric-row">
+                    <span>RAM</span>
+                    <span id="metric-ram" class="metric-val">-- / -- GB</span>
+                </div>
+                <div class="metric-bar"><div id="bar-ram" class="metric-progress" style="width: 0%"></div></div>
+
+                <div class="metric-row">
+                    <span>Battery</span>
+                    <span id="metric-battery" class="metric-val"><i class="fa-solid fa-battery-half"></i> --%</span>
+                </div>
+            </div>
+
+            <!-- Ollama Status Indicator -->
+            <div class="status-footer">
+                <div id="ollama-pill" class="status-pill offline">
+                    <span class="status-dot"></span>
+                    <span id="ollama-status-text">Ollama: Offline</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="header-left">
+                    <h1 id="page-title">Personal Assistant</h1>
+                    <span class="agent-tagline">100% Private • Running on your Laptop</span>
+                </div>
+                <div class="header-right">
+                    <div class="model-picker-wrap">
+                        <i class="fa-solid fa-brain"></i>
+                        <select id="model-select">
+                            <option value="gemini-flash-lite-latest" selected>gemini-flash-lite-latest (Google Cloud Free)</option>
+                            <option value="llama3.2:3b">llama3.2:3b (Local Ollama)</option>
+                            <option value="llama3.2:1b">llama3.2:1b (Fast Local)</option>
+                        </select>
+                    </div>
+                    <button id="voice-toggle-btn" class="icon-toggle-btn" title="Toggle Voice Output">
+                        <i class="fa-solid fa-volume-xmark"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: Chat Assistant -->
+            <section id="tab-chat" class="tab-pane active">
+                <div class="chat-container">
+                    <div id="messages-container" class="messages-container">
+                        <!-- Welcome message -->
+                        <div class="message-bubble assistant">
+                            <div class="bubble-avatar"><i class="fa-solid fa-robot"></i></div>
+                            <div class="bubble-content">
+                                <h3>Hello! I am Aegis, your local AI assistant.</h3>
+                                <p>I run directly on your laptop using Ollama. I have direct access to your local tools:</p>
+                                <ul>
+                                    <li>💻 <strong>Hardware & System:</strong> Check battery, RAM, CPU & processes.</li>
+                                    <li>📁 <strong>Files & Shell:</strong> Browse files, read/write documents, run scripts.</li>
+                                    <li>📝 <strong>Productivity:</strong> Manage to-do lists and quick notes.</li>
+                                    <li>🌐 <strong>Web Search:</strong> Retrieve current information via DuckDuckGo.</li>
+                                    <li>🎙️ <strong>Voice:</strong> Speak to me via the microphone button below!</li>
+                                </ul>
+                                <p>How can I assist you today?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Tool execution bar -->
+                    <div id="activity-indicator" class="activity-bar hidden">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span id="activity-text">Agent is thinking...</span>
+                    </div>
+
+                    <!-- Quick Suggestions -->
+                    <div class="quick-prompts">
+                        <button class="chip" onclick="quickSend('Check my laptop battery, CPU and RAM status')"><i class="fa-solid fa-laptop"></i> System Health</button>
+                        <button class="chip" onclick="quickSend('What pending tasks do I have?')"><i class="fa-solid fa-check-double"></i> Check Tasks</button>
+                        <button class="chip" onclick="quickSend('Search the web for the latest artificial intelligence news')"><i class="fa-solid fa-globe"></i> Web Search</button>
+                        <button class="chip" onclick="quickSend('List files in this project directory')"><i class="fa-solid fa-folder-open"></i> Explore Files</button>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="input-container">
+                        <button id="mic-btn" class="mic-button" title="Speak to agent">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                        <textarea id="user-input" placeholder="Type a message or click the microphone to speak..." rows="1"></textarea>
+                        <button id="send-btn" class="send-button">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: Productivity (Tasks & Notes) -->
+            <section id="tab-productivity" class="tab-pane">
+                <div class="productivity-grid">
+                    <!-- Tasks Panel -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-check-to-slot"></i> To-Do Planner</h2>
+                        </div>
+                        <div class="panel-add-bar">
+                            <input type="text" id="new-todo-input" placeholder="Add a new task...">
+                            <select id="todo-priority-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                            <button class="btn-primary" onclick="handleAddTodo()"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div id="todo-list" class="items-list">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Notes Panel -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-note-sticky"></i> Quick Notes</h2>
+                        </div>
+                        <div class="panel-add-bar vertical">
+                            <input type="text" id="new-note-title" placeholder="Note Title...">
+                            <textarea id="new-note-content" placeholder="Write your note here..." rows="2"></textarea>
+                            <button class="btn-primary" onclick="handleAddNote()"><i class="fa-solid fa-plus"></i> Save Note</button>
+                        </div>
+                        <div id="notes-list" class="items-list">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: Knowledge Base -->
+            <section id="tab-knowledge" class="tab-pane">
+                <div class="panel-card full-height">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-book"></i> Personal Knowledge Base (RAG)</h2>
+                        <span class="subtitle">Upload notes, research papers, or docs to let your agent answer questions from them.</span>
+                    </div>
+
+                    <div class="upload-dropzone" id="dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                        <h3>Drop text or markdown documents here</h3>
+                        <p>Supports .txt, .md, .py, .json files</p>
+                        <input type="file" id="file-upload" accept=".txt,.md,.py,.json,.csv" style="display:none">
+                        <button class="btn-outline" onclick="document.getElementById('file-upload').click()">Browse File</button>
+                    </div>
+
+                    <div id="upload-status" class="upload-status"></div>
+                </div>
+            </section>
+
+            <!-- TAB 4: Local Models Manager -->
+            <section id="tab-models" class="tab-pane">
+                <div class="panel-card full-height">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-microchip"></i> Ollama Local Models</h2>
+                        <span class="subtitle">Manage and download offline models on your laptop</span>
+                    </div>
+
+                    <div class="models-container">
+                        <!-- Cloud Free Tier Section -->
+                        <div class="api-key-config-card" style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-cloud-bolt"></i> Free Cloud AI (Zero Laptop RAM & Battery)</h3>
+                                <span class="model-badge speed">100% Free Tier</span>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+                                Use Google Gemini API (15 requests/min, 1,500/day free) or Groq Cloud (Llama 3.3 70B free) for blazing fast responses with 0 MB download!
+                            </p>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="cloud-provider-select" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: var(--radius-sm); outline: none;">
+                                    <option value="gemini">Google Gemini (Recommended)</option>
+                                    <option value="groq">Groq Cloud (Llama 3.3 70B)</option>
+                                </select>
+                                <input type="password" id="cloud-api-key-input" placeholder="Paste your free API key here..." style="flex: 1; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); outline: none;">
+                                <button class="btn-primary" onclick="saveApiKey()"><i class="fa-solid fa-key"></i> Connect Key</button>
+                            </div>
+                            <div id="key-save-status" style="font-size: 12px; margin-top: 8px;"></div>
+                        </div>
+
+                        <h3>Installed Local Models (Ollama)</h3>
+                        <div id="installed-models-list" class="model-cards-grid">
+                            <!-- Dynamically loaded -->
+                        </div>
+
+                        <h3 style="margin-top: 30px;">Recommended Models for 8GB RAM Laptop</h3>
+                        <div class="model-cards-grid">
+                            <div class="model-card">
+                                <div class="model-badge">Recommended</div>
+                                <h4>llama3.2:3b</h4>
+                                <p>Meta's state-of-the-art 3B model. Outstanding general reasoning, fast, lightweight.</p>
+                                <span class="model-size"><i class="fa-solid fa-download"></i> ~2.0 GB</span>
+                                <button class="btn-outline btn-sm" onclick="triggerPullModel('llama3.2:3b')">Download / Pull</button>
+                            </div>
+
+                            <div class="model-card">
+                                <div class="model-badge speed">Ultra-Fast</div>
+                                <h4>llama3.2:1b</h4>
+                                <p>Extremely lightweight 1B model. Lightning-fast responses, minimal memory usage.</p>
+                                <span class="model-size"><i class="fa-solid fa-download"></i> ~1.3 GB</span>
+                                <button class="btn-outline btn-sm" onclick="triggerPullModel('llama3.2:1b')">Download / Pull</button>
+                            </div>
+
+                            <div class="model-card">
+                                <div class="model-badge code">Coding</div>
+                                <h4>qwen2.5:3b</h4>
+                                <p>Alibaba's Qwen 2.5 3B. Excellent instruction-following, math, and tool calling.</p>
+                                <span class="model-size"><i class="fa-solid fa-download"></i> ~2.0 GB</span>
+                                <button class="btn-outline btn-sm" onclick="triggerPullModel('qwen2.5:3b')">Download / Pull</button>
+                            </div>
+                        </div>
+
+                        <div id="pull-progress-box" class="pull-progress-box hidden">
+                            <h4><i class="fa-solid fa-cloud-arrow-down"></i> Downloading Model...</h4>
+                            <p id="pull-status-text">Connecting to Ollama library...</p>
+                            <div class="metric-bar"><div id="pull-progress-bar" class="metric-progress" style="width: 10%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
